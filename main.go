@@ -1,50 +1,67 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"encoding/json"
 	"html/template"
-	"time"
-	"path"
+	"log"
+	"net/http"
 )
 
-func handle(w http.ResponseWriter, r *http.Request) {
-	// You might want to move ParseGlob outside of handle so it doesn't
-	// re-parse on every http request.
-	tmpl, err := template.ParseGlob("templates/*")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+// Define a structure for saving quiz progress
+type Progress struct {
+	UserID string `json:"userId"`
+	Score  int    `json:"score"`
+}
+
+var progressStore = make(map[string]Progress)
+
+func mainPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("templates/index.html"))
+	tmpl.Execute(w, nil)
+}
+
+// API to save progress
+func saveProgress(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	name := ""
-	if r.URL.Path == "/" {
-		name = "index.html"
-	} else {
-		name = path.Base(r.URL.Path)
+	var p Progress
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, "Invalid data", http.StatusBadRequest)
+		return
 	}
 
-	data := struct{
-		Time time.Time
-	}{
-		Time: time.Now(),
+	progressStore[p.UserID] = p
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"status": "saved"})
+}
+
+// API to get progress
+func getProgress(w http.ResponseWriter, r *http.Request) {
+	userID := r.URL.Query().Get("userId")
+	progress, ok := progressStore[userID]
+	if !ok {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
 	}
 
-	if err := tmpl.ExecuteTemplate(w, name, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		fmt.Println("error", err)
-	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(progress)
 }
 
 func main() {
-	fmt.Println("http server up!")
-	http.Handle(
-		"/static/",
-		 http.StripPrefix(
-			"/static/",
-			http.FileServer(http.Dir("static")),
-		),
-	)
-	http.HandleFunc("/", handle)
-	http.ListenAndServe(":0", nil)
+	// Serve static assets
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	// Template handler
+	http.HandleFunc("/", mainPage)
+
+	// API routes
+	http.HandleFunc("/save", saveProgress)
+	http.HandleFunc("/get", getProgress)
+
+	log.Println("Server running at http://localhost:8080/")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

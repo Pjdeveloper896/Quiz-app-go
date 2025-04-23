@@ -1,14 +1,62 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <title>repl.it</title>
-    <link href="/static/style.css" rel="stylesheet" type="text/css" />
+    <meta charset="UTF-8" />
+    <title>Trivia Quiz</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Bulma CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <style>
+      .answer-button {
+        margin: 5px;
+        padding: 8px;
+        cursor: pointer;
+      }
+      .correct{
+        background-color: green;
+        color: white;
+      }
+      .incorrect{
+        background-color: red;
+        color: white;
+      }
+    </style>
   </head>
   <body>
-		<h1>Hello Gophers</h1>
-		<img class="gopher" src="/static/gopher.svg" />
-		<p>It's {{.Time.Format "3:04PM" }} (in Greenwich)</p>
+    <div class="box">
+      <section class="card">
+        <label class="card-item">Category:</label>
+        <select id="category" class="nav-dropdown">
+          <option value="17">Science</option>
+          <option value="22">Geography</option>
+          <option value="23">History</option>
+          <option value="11">Movies</option>
+          <option value="12">Music</option>
+        </select>
+      </section>
+
+      <section class="card">
+        <label class="card-item">Type:</label>
+        <select id="type" class="nav-dropdown">
+          <option value="multiple">MCQ's</option>
+          <option value="boolean">True/False</option>
+        </select>
+      </section>
+
+      <section class="card">
+        <label class="card-item">Difficulty:</label>
+        <select id="difficulty" class="nav-dropdown">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </section>
+
+      <button type="button" id="btn" class="bg-blue-700 text-white   px-1 rounded-md shadow-md hover:ring-4 ">Start Quiz</button>
+      <div id="quiz"></div>
+    </div>
+
+    <script src="/static/Index.js"></script>
   </body>
 </html>
